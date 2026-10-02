@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — Hire A Lawyer</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand"><div class="logo-icon">⚖️</div><span>Hire A <em>Lawyer</em></span></a>
+    <div class="navbar-user" style="position:relative">
+      <div id="notif-bell" onclick="toggleNotifPanel()" style="position:relative">
+        <span style="font-size:1.3rem;cursor:pointer;color:#fff">🔔</span>
+        <span class="notif-badge nav-badge" style="position:absolute;top:-6px;right:-6px;display:none"></span>
+      </div>
+      <div class="user-avatar" onclick="window.location.href='/dashboard'"></div>
+      <div id="notif-panel" class="notif-panel"><div style="padding:12px 16px;border-bottom:1px solid var(--border)"><strong>Notifications</strong></div><div id="notif-list"></div></div>
+      <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:#fff;border:none" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">🛡️ Admin Panel</h1>
+        <p class="page-subtitle">Manage users, cases, and platform settings</p>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="adminStatsGrid"></div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="users-tab">👥 Users</button>
+      <button class="tab-btn" data-tab="cases-tab">📋 Cases</button>
+      <button class="tab-btn" data-tab="lawyers-tab">⚖️ Lawyers</button>
+    </div>
+
+    <!-- Users Tab -->
+    <div id="users-tab" class="tab-pane active">
+      <div class="filter-bar">
+        <div class="form-group">
+          <label class="form-label">Filter by Role</label>
+          <select id="userRoleFilter" class="form-control" onchange="loadUsers(this.value)">
+            <option value="">All Roles</option>
+            <option value="client">Clients</option>
+            <option value="lawyer">Lawyers</option>
+            <option value="admin">Admins</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div id="usersContainer"><div class="empty-state"><div class="spinner" style="margin:0 auto 12px"></div></div></div>
+      </div>
+    </div>
+
+    <!-- Cases Tab -->
+    <div id="cases-tab" class="tab-pane">
+      <div class="card">
+        <div id="adminCasesContainer"><div class="empty-state"><div class="spinner" style="margin:0 auto 12px"></div></div></div>
+      </div>
+    </div>
+
+    <!-- Lawyers Tab -->
+    <div id="lawyers-tab" class="tab-pane">
+      <div class="card">
+        <div id="lawyersContainer"><div class="empty-state"><div class="spinner" style="margin:0 auto 12px"></div></div></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Assign Lawyer Modal -->
+  <div class="modal-overlay" id="assignModal">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <h2 class="modal-title">⚖️ Assign Lawyer to Case</h2>
+        <button class="modal-close" onclick="UI.closeModal('assignModal')">✕</button>
+      </div>
+      <input type="hidden" id="assignCaseId">
+      <div class="form-group">
+        <label class="form-label">Select Lawyer *</label>
+        <select id="assignLawyerId" class="form-control">
+          <option value="">-- Select a lawyer --</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeModal('assignModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="assignLawyer()">✅ Assign Lawyer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    Auth.requireAuth();
+    Auth.requireRole(['admin']);
+    const user = Auth.getUser();
+
+    function buildSidebar() {
+      document.getElementById('sidebar').innerHTML = `
+        <div class="sidebar-section">
+          <div class="sidebar-label">Main</div>
+          <a href="/dashboard" class="sidebar-item"><span class="icon">🏠</span> Dashboard</a>
+          <a href="/lawyers" class="sidebar-item"><span class="icon">⚖️</span> Find Lawyers</a>
+          <a href="/cases" class="sidebar-item"><span class="icon">📋</span> Cases</a>
+          <a href="/appointments" class="sidebar-item"><span class="icon">📅</span> Appointments</a>
+          <a href="/admin" class="sidebar-item active"><span class="icon">🛡️</span> Admin Panel</a>
+        </div>
+        <div class="sidebar-section" style="margin-top:auto">
+          <div class="sidebar-item" style="cursor:default"><span class="icon">👤</span><div><div style="font-weight:600;font-size:0.85rem">${user.name}</div><div style="font-size:0.72rem;color:var(--primary)">Administrator</div></div></div>
+          <div class="sidebar-item" onclick="logout()" style="cursor:pointer;color:var(--danger)"><span class="icon">🚪</span> Logout</div>
+        </div>`;
+      document.querySelector('.user-avatar').textContent = UI.avatarInitials(user.name);
+    }
+
+    async function loadDashboard() {
+      const res = await API.get('/admin/dashboard');
+      if (!res || !res.ok) return;
+      const { userStats, caseStats, apptStats } = res.data;
+      document.getElementById('adminStatsGrid').innerHTML = `
+        <div class="stat-card"><div class="stat-icon blue">👥</div><div class="stat-info"><h3>${userStats.total_users}</h3><p>Total Users</p></div></div>
+        <div class="stat-card"><div class="stat-icon gold">⚖️</div><div class="stat-info"><h3>${userStats.total_lawyers}</h3><p>Lawyers</p></div></div>
+        <div class="stat-card"><div class="stat-icon green">👤</div><div class="stat-info"><h3>${userStats.total_clients}</h3><p>Clients</p></div></div>
+        <div class="stat-card"><div class="stat-icon blue">📋</div><div class="stat-info"><h3>${caseStats.total_cases}</h3><p>Total Cases</p></div></div>
+        <div class="stat-card"><div class="stat-icon red">📊</div><div class="stat-info"><h3>${caseStats.open_cases}</h3><p>Open Cases</p></div></div>
+        <div class="stat-card"><div class="stat-icon green">📅</div><div class="stat-info"><h3>${apptStats.total_appointments}</h3><p>Appointments</p></div></div>
+      `;
+    }
+
+    async function loadUsers(role = '') {
+      const url = `/admin/users${role ? '?role=' + role : ''}`;
+      const res = await API.get(url);
+      if (!res || !res.ok) return;
+      const users = res.data.data;
+      if (!users.length) { document.getElementById('usersContainer').innerHTML = UI.emptyState('No users found'); return; }
+      document.getElementById('usersContainer').innerHTML = `
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Phone</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>${users.map(u => `
+              <tr>
+                <td><strong style="font-size:0.88rem">${u.name}</strong></td>
+                <td style="font-size:0.82rem;color:var(--text-muted)">${u.email}</td>
+                <td><span class="badge ${u.role === 'admin' ? 'badge-active' : u.role === 'lawyer' ? 'badge-pending' : 'badge-open'}">${u.role}</span></td>
+                <td style="font-size:0.82rem">${u.phone || '—'}</td>
+                <td style="font-size:0.78rem;color:var(--text-muted)">${UI.formatDate(u.created_at)}</td>
+                <td><span class="badge ${u.is_active ? 'badge-active' : 'badge-closed'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
+                <td>
+                  <button class="btn btn-sm ${u.is_active ? 'btn-danger' : 'btn-success'}" onclick="toggleUser(${u.id}, this)">
+                    ${u.is_active ? 'Deactivate' : 'Activate'}
+                  </button>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    async function toggleUser(id, btn) {
+      const res = await API.put(`/admin/users/${id}/toggle`);
+      if (!res || !res.ok) { Toast.error('Failed to update user.'); return; }
+      Toast.success(res.data.message);
+      loadUsers(document.getElementById('userRoleFilter').value);
+    }
+
+    async function loadAdminCases() {
+      const res = await API.get('/admin/cases');
+      if (!res || !res.ok) return;
+      const cases = res.data.data;
+      if (!cases.length) { document.getElementById('adminCasesContainer').innerHTML = UI.emptyState('No cases found'); return; }
+      document.getElementById('adminCasesContainer').innerHTML = `
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Case Number</th><th>Title</th><th>Client</th><th>Lawyer</th><th>Status</th><th>Priority</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody>${cases.map(c => `
+              <tr>
+                <td><code style="font-size:0.78rem">${c.case_number}</code></td>
+                <td><strong style="font-size:0.87rem">${c.title}</strong></td>
+                <td style="font-size:0.85rem">${c.client_name}</td>
+                <td style="font-size:0.85rem">${c.lawyer_name || '<span style="color:var(--warning)">Unassigned</span>'}</td>
+                <td>${UI.statusBadge(c.status)}</td>
+                <td>${UI.priorityBadge(c.priority)}</td>
+                <td style="font-size:0.78rem;color:var(--text-muted)">${UI.formatDate(c.created_at)}</td>
+                <td>
+                  <button class="btn btn-sm btn-primary" onclick="openAssign(${c.id})">Assign Lawyer</button>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    async function loadAdminLawyers() {
+      const res = await API.get('/admin/users?role=lawyer');
+      if (!res || !res.ok) return;
+      const lawyers = res.data.data;
+      if (!lawyers.length) { document.getElementById('lawyersContainer').innerHTML = UI.emptyState('No lawyers registered'); return; }
+      document.getElementById('lawyersContainer').innerHTML = `
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>${lawyers.map(l => `
+              <tr>
+                <td><strong style="font-size:0.88rem">${l.name}</strong></td>
+                <td style="font-size:0.82rem;color:var(--text-muted)">${l.email}</td>
+                <td style="font-size:0.82rem">${l.phone || '—'}</td>
+                <td style="font-size:0.78rem;color:var(--text-muted)">${UI.formatDate(l.created_at)}</td>
+                <td><span class="badge ${l.is_active ? 'badge-active' : 'badge-closed'}">${l.is_active ? 'Active' : 'Inactive'}</span></td>
+                <td>
+                  <button class="btn btn-sm ${l.is_active ? 'btn-danger' : 'btn-success'}" onclick="toggleUser(${l.id}, this)">
+                    ${l.is_active ? 'Deactivate' : 'Activate'}
+                  </button>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    let lawyersList = [];
+    async function openAssign(caseId) {
+      document.getElementById('assignCaseId').value = caseId;
+      if (!lawyersList.length) {
+        const res = await API.get('/lawyers?limit=100');
+        if (res && res.ok) {
+          lawyersList = res.data.data;
+          const select = document.getElementById('assignLawyerId');
+          select.innerHTML = '<option value="">-- Select a lawyer --</option>';
+          lawyersList.forEach(l => { select.innerHTML += `<option value="${l.id}">${l.name} — ${l.specialization}</option>`; });
+        }
+      }
+      UI.openModal('assignModal');
+    }
+
+    async function assignLawyer() {
+      const caseId = document.getElementById('assignCaseId').value;
+      const lawyerId = document.getElementById('assignLawyerId').value;
+      if (!lawyerId) { Toast.error('Please select a lawyer.'); return; }
+      const res = await API.put(`/admin/cases/${caseId}/assign`, { lawyer_id: lawyerId });
+      if (!res || !res.ok) { Toast.error('Failed to assign lawyer.'); return; }
+      UI.closeModal('assignModal');
+      Toast.success('Lawyer assigned successfully!');
+      loadAdminCases();
+    }
+
+    // Tab switching with data loading
+    document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        const pane = document.getElementById(btn.dataset.tab);
+        if (pane) pane.classList.add('active');
+        if (btn.dataset.tab === 'cases-tab') loadAdminCases();
+        if (btn.dataset.tab === 'lawyers-tab') loadAdminLawyers();
+      });
+    });
+
+    buildSidebar();
+    loadDashboard();
+    loadUsers();
+  </script>
+</body>
+</html>

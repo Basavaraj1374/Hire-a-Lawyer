@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hire A Lawyer — Connect with Expert Lawyers</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .landing-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 20px 40px; display: flex; align-items: center; justify-content: space-between; background: transparent; transition: background 0.3s; }
+    .landing-nav.scrolled { background: var(--primary-dark); box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+    .landing-nav .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .landing-nav .brand .icon { width: 38px; height: 38px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .landing-nav .brand span { color: #fff; font-size: 1.2rem; font-weight: 800; }
+    .landing-nav-links { display: flex; align-items: center; gap: 8px; }
+    .landing-nav-links a { color: rgba(255,255,255,0.85); text-decoration: none; padding: 8px 16px; border-radius: 8px; font-size: 0.9rem; transition: all 0.2s; }
+    .landing-nav-links a:hover { color: #fff; background: rgba(255,255,255,0.1); }
+    .features { padding: 80px 40px; max-width: 1200px; margin: 0 auto; }
+    .section-title { text-align: center; margin-bottom: 48px; }
+    .section-title h2 { font-size: 2.2rem; font-weight: 800; color: var(--primary); }
+    .section-title p { color: var(--text-muted); font-size: 1rem; margin-top: 8px; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
+    .feature-card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: var(--shadow); text-align: center; transition: all 0.3s; }
+    .feature-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-hover); }
+    .feature-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 16px; }
+    .feature-card h3 { font-size: 1.05rem; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+    .feature-card p { font-size: 0.87rem; color: var(--text-muted); line-height: 1.6; }
+    .how-it-works { background: var(--primary); padding: 80px 40px; }
+    .how-it-works .section-title h2 { color: #fff; }
+    .how-it-works .section-title p { color: rgba(255,255,255,0.7); }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; max-width: 1000px; margin: 0 auto; }
+    .step { text-align: center; color: #fff; }
+    .step-num { width: 52px; height: 52px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 800; margin: 0 auto 16px; }
+    .step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+    .step p { font-size: 0.85rem; color: rgba(255,255,255,0.7); }
+    .cta-section { padding: 80px 40px; text-align: center; }
+    .footer { background: var(--primary-dark); color: rgba(255,255,255,0.7); padding: 24px 40px; text-align: center; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="landing-nav" id="landingNav">
+    <a href="/" class="brand">
+      <div class="icon">⚖️</div>
+      <span>Hire A <em style="color:var(--accent)">Lawyer</em></span>
+    </a>
+    <div class="landing-nav-links" id="navLinks">
+      <a href="/lawyers">Find Lawyers</a>
+      <a href="/login" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,0.4)">Login</a>
+      <a href="/register" class="btn btn-accent">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-text">
+        <h1>Find Your Perfect <span>Legal Expert</span> in Minutes</h1>
+        <p>Connect with experienced lawyers across all practice areas. Book appointments, track your case, and share documents — all in one secure platform.</p>
+        <div class="hero-buttons">
+          <a href="/register" class="btn btn-accent" style="padding:14px 28px;font-size:1rem">🚀 Get Started Free</a>
+          <a href="/lawyers" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,0.5);padding:14px 28px;font-size:1rem">🔍 Browse Lawyers</a>
+        </div>
+        <div class="flex gap-3 mt-4" style="flex-wrap:wrap">
+          <span style="color:rgba(255,255,255,0.7);font-size:0.85rem">✅ Free registration</span>
+          <span style="color:rgba(255,255,255,0.7);font-size:0.85rem">✅ Verified lawyers</span>
+          <span style="color:rgba(255,255,255,0.7);font-size:0.85rem">✅ Secure documents</span>
+        </div>
+      </div>
+      <div class="hero-card">
+        <h3 style="color:#fff;font-size:1.1rem;margin-bottom:20px;text-align:center">Platform Overview</h3>
+        <div class="hero-stats">
+          <div class="hero-stat"><h3>500+</h3><p>Verified Lawyers</p></div>
+          <div class="hero-stat"><h3>10K+</h3><p>Cases Resolved</p></div>
+          <div class="hero-stat"><h3>4.8★</h3><p>Average Rating</p></div>
+          <div class="hero-stat"><h3>20+</h3><p>Practice Areas</p></div>
+        </div>
+        <div style="margin-top:20px;padding:16px;background:rgba(255,255,255,0.08);border-radius:12px">
+          <p style="color:rgba(255,255,255,0.7);font-size:0.82rem;margin-bottom:10px">Practice Areas</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <span style="background:var(--accent);color:#fff;padding:4px 10px;border-radius:20px;font-size:0.75rem">Family Law</span>
+            <span style="background:rgba(255,255,255,0.15);color:#fff;padding:4px 10px;border-radius:20px;font-size:0.75rem">Criminal Law</span>
+            <span style="background:rgba(255,255,255,0.15);color:#fff;padding:4px 10px;border-radius:20px;font-size:0.75rem">Corporate Law</span>
+            <span style="background:rgba(255,255,255,0.15);color:#fff;padding:4px 10px;border-radius:20px;font-size:0.75rem">Property Law</span>
+            <span style="background:rgba(255,255,255,0.15);color:#fff;padding:4px 10px;border-radius:20px;font-size:0.75rem">Civil Law</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features">
+    <div class="section-title">
+      <h2>Everything You Need for Legal Matters</h2>
+      <p>A comprehensive platform designed for seamless legal assistance</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(26,60,110,0.1)">📅</div>
+        <h3>Easy Appointment Booking</h3>
+        <p>Schedule consultations with lawyers in minutes. Pick your preferred time, mode (in-person, video, or phone), and confirm instantly.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(200,165,91,0.15)">📁</div>
+        <h3>Secure Document Sharing</h3>
+        <p>Upload and share sensitive legal documents with end-to-end security. Organize files by case for easy retrieval.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(39,174,96,0.1)">📊</div>
+        <h3>Real-Time Case Tracking</h3>
+        <p>Stay updated on your case status at every stage. Complete audit trail and timeline view of all case updates.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(231,76,60,0.1)">🔐</div>
+        <h3>Role-Based Access Control</h3>
+        <p>Secure, role-specific dashboards for clients, lawyers, and administrators. Your data stays private and protected.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(52,152,219,0.1)">🔔</div>
+        <h3>Smart Notifications</h3>
+        <p>Get instant notifications for appointment confirmations, case updates, document uploads, and messages.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(155,89,182,0.1)">⭐</div>
+        <h3>Verified Reviews</h3>
+        <p>Read authentic reviews from real clients. Make informed decisions based on ratings and detailed feedback.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="how-it-works">
+    <div class="section-title">
+      <h2>How It Works</h2>
+      <p>Get legal help in 4 simple steps</p>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><h3>Create Account</h3><p>Register as a client or lawyer in under a minute</p></div>
+      <div class="step"><div class="step-num">2</div><h3>Find a Lawyer</h3><p>Browse profiles, specializations, and ratings</p></div>
+      <div class="step"><div class="step-num">3</div><h3>Book Appointment</h3><p>Schedule a consultation at your preferred time</p></div>
+      <div class="step"><div class="step-num">4</div><h3>Track Your Case</h3><p>Stay informed with real-time updates and documents</p></div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <h2 style="font-size:2rem;font-weight:800;color:var(--primary);margin-bottom:12px">Ready to Get Started?</h2>
+    <p style="color:var(--text-muted);margin-bottom:28px">Join thousands of clients who found the right legal help.</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+      <a href="/register?role=client" class="btn btn-primary" style="padding:14px 28px">I Need a Lawyer</a>
+      <a href="/register?role=lawyer" class="btn btn-accent" style="padding:14px 28px">I'm a Lawyer</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>© 2024 Hire A Lawyer. All rights reserved. | Built for 5th Semester Web Development Project</p>
+  </footer>
+
+  <script src="/js/app.js"></script>
+  <script>
+    // Redirect logged-in users
+    if (Auth.isLoggedIn()) {
+      const links = document.getElementById('navLinks');
+      const user = Auth.getUser();
+      links.innerHTML = `<a href="/dashboard" class="btn btn-accent">Go to Dashboard</a>`;
+    }
+    // Navbar scroll effect
+    window.addEventListener('scroll', () => {
+      document.getElementById('landingNav').classList.toggle('scrolled', window.scrollY > 50);
+    });
+  </script>
+</body>
+</html>

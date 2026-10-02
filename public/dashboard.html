@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Hire A Lawyer</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <div class="logo-icon">⚖️</div>
+      <span>Hire A <em>Lawyer</em></span>
+    </a>
+    <div class="navbar-nav" id="navLinks"></div>
+    <div class="navbar-user" style="position:relative">
+      <div style="position:relative" id="notif-bell" onclick="toggleNotifPanel()">
+        <span style="font-size:1.3rem;cursor:pointer;color:#fff">🔔</span>
+        <span class="notif-badge nav-badge" style="position:absolute;top:-6px;right:-6px;display:none"></span>
+      </div>
+      <div class="user-avatar" id="nav-user-avatar" onclick="window.location.href='/dashboard'"></div>
+      <div id="notif-panel" class="notif-panel">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <strong style="font-size:0.9rem">Notifications</strong>
+          <button class="btn btn-sm btn-outline" onclick="Notifs.markAllRead()" style="padding:4px 10px;font-size:0.75rem">Mark all read</button>
+        </div>
+        <div id="notif-list"></div>
+      </div>
+      <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:#fff;border:none" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title" id="welcomeTitle">Dashboard</h1>
+        <p class="page-subtitle" id="welcomeSubtitle">Welcome back!</p>
+      </div>
+      <div id="headerActions"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <!-- Content Grid -->
+    <div class="grid-2" id="dashboardGrid">
+      <!-- Recent Cases -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">📋 Recent Cases</h3>
+          <a href="/cases" class="btn btn-sm btn-outline">View All</a>
+        </div>
+        <div id="recentCasesList"><div class="spinner" style="margin:20px auto"></div></div>
+      </div>
+      <!-- Upcoming Appointments -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">📅 Upcoming Appointments</h3>
+          <a href="/appointments" class="btn btn-sm btn-outline">View All</a>
+        </div>
+        <div id="recentApptList"><div class="spinner" style="margin:20px auto"></div></div>
+      </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminSection" style="display:none;margin-top:24px">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">🛡️ Admin Quick Stats</h3>
+          <a href="/admin" class="btn btn-sm btn-primary">Admin Panel</a>
+        </div>
+        <div id="adminStats"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    Auth.requireAuth();
+    const user = Auth.getUser();
+
+    // Build sidebar based on role
+    function buildSidebar() {
+      const commonItems = `
+        <div class="sidebar-section">
+          <div class="sidebar-label">Main</div>
+          <a href="/dashboard" class="sidebar-item active"><span class="icon">🏠</span> Dashboard</a>
+          <a href="/lawyers" class="sidebar-item"><span class="icon">⚖️</span> Find Lawyers</a>
+          <a href="/cases" class="sidebar-item"><span class="icon">📋</span> My Cases</a>
+          <a href="/appointments" class="sidebar-item"><span class="icon">📅</span> Appointments</a>
+        </div>`;
+      
+      const adminItems = user.role === 'admin' ? `
+        <div class="sidebar-section">
+          <div class="sidebar-label">Administration</div>
+          <a href="/admin" class="sidebar-item"><span class="icon">🛡️</span> Admin Panel</a>
+        </div>` : '';
+
+      const profileItems = `
+        <div class="sidebar-section" style="margin-top:auto">
+          <div class="sidebar-label">Account</div>
+          <div class="sidebar-item" style="cursor:default">
+            <span class="icon">👤</span>
+            <div>
+              <div style="font-weight:600;font-size:0.85rem">${user.name}</div>
+              <div style="font-size:0.72rem;color:var(--text-muted);text-transform:capitalize">${user.role}</div>
+            </div>
+          </div>
+          <div class="sidebar-item" onclick="logout()" style="cursor:pointer;color:var(--danger)"><span class="icon">🚪</span> Logout</div>
+        </div>`;
+
+      document.getElementById('sidebar').innerHTML = commonItems + adminItems + profileItems;
+    }
+
+    // Build nav links
+    function buildNavLinks() {
+      document.getElementById('nav-user-avatar').textContent = UI.avatarInitials(user.name);
+      document.getElementById('nav-user-avatar').title = user.name;
+    }
+
+    // Load stats
+    async function loadStats() {
+      document.getElementById('welcomeTitle').textContent = `Welcome, ${user.name.split(' ')[0]}! 👋`;
+      document.getElementById('welcomeSubtitle').textContent = `${new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+
+      if (user.role === 'admin') {
+        document.getElementById('headerActions').innerHTML = '<a href="/admin" class="btn btn-primary">🛡️ Admin Panel</a>';
+        await loadAdminDash();
+      } else if (user.role === 'client') {
+        document.getElementById('headerActions').innerHTML = '<a href="/cases" class="btn btn-primary" onclick="window.location.href=\'/cases#new\'">➕ New Case</a>';
+      } else if (user.role === 'lawyer') {
+        document.getElementById('headerActions').innerHTML = `<span class="badge badge-active">Active Lawyer</span>`;
+      }
+    }
+
+    async function loadAdminDash() {
+      const res = await API.get('/admin/dashboard');
+      if (!res || !res.ok) return;
+      const { userStats, caseStats, apptStats } = res.data;
+      document.getElementById('adminSection').style.display = 'block';
+      document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card"><div class="stat-icon blue">👥</div><div class="stat-info"><h3>${userStats.total_users}</h3><p>Total Users</p></div></div>
+        <div class="stat-card"><div class="stat-icon gold">⚖️</div><div class="stat-info"><h3>${userStats.total_lawyers}</h3><p>Lawyers</p></div></div>
+        <div class="stat-card"><div class="stat-icon green">📋</div><div class="stat-info"><h3>${caseStats.total_cases}</h3><p>Total Cases</p></div></div>
+        <div class="stat-card"><div class="stat-icon red">📅</div><div class="stat-info"><h3>${apptStats.total_appointments}</h3><p>Appointments</p></div></div>
+      `;
+      document.getElementById('adminStats').innerHTML = `
+        <div class="grid-3" style="gap:16px">
+          <div style="background:var(--bg);padding:16px;border-radius:var(--radius-sm);text-align:center">
+            <h3 style="font-size:1.5rem;color:var(--info)">${caseStats.open_cases}</h3>
+            <p style="font-size:0.82rem;color:var(--text-muted)">Open Cases</p>
+          </div>
+          <div style="background:var(--bg);padding:16px;border-radius:var(--radius-sm);text-align:center">
+            <h3 style="font-size:1.5rem;color:var(--success)">${caseStats.active_cases}</h3>
+            <p style="font-size:0.82rem;color:var(--text-muted)">Active Cases</p>
+          </div>
+          <div style="background:var(--bg);padding:16px;border-radius:var(--radius-sm);text-align:center">
+            <h3 style="font-size:1.5rem;color:var(--text-muted)">${caseStats.closed_cases}</h3>
+            <p style="font-size:0.82rem;color:var(--text-muted)">Closed Cases</p>
+          </div>
+        </div>`;
+    }
+
+    async function loadRecentCases() {
+      const res = await API.get('/cases');
+      const el = document.getElementById('recentCasesList');
+      if (!res || !res.ok || !res.data.data.length) {
+        el.innerHTML = UI.emptyState('No cases yet', '📋'); return;
+      }
+      el.innerHTML = res.data.data.slice(0, 4).map(c => `
+        <div style="padding:12px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <a href="/cases" style="font-weight:600;font-size:0.88rem;color:var(--primary);text-decoration:none">${c.title}</a>
+            <p style="font-size:0.75rem;color:var(--text-muted);margin-top:2px">${c.case_number} • ${UI.formatDate(c.created_at)}</p>
+          </div>
+          ${UI.statusBadge(c.status)}
+        </div>`).join('');
+    }
+
+    async function loadRecentAppts() {
+      const res = await API.get('/appointments');
+      const el = document.getElementById('recentApptList');
+      if (!res || !res.ok || !res.data.data.length) {
+        el.innerHTML = UI.emptyState('No appointments yet', '📅'); return;
+      }
+      el.innerHTML = res.data.data.slice(0, 4).map(a => `
+        <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <p style="font-weight:600;font-size:0.88rem">${a.title}</p>
+              <p style="font-size:0.75rem;color:var(--text-muted)">
+                ${UI.formatDate(a.appointment_date)} at ${a.appointment_time}
+                ${a.lawyer_name ? '• with ' + a.lawyer_name : ''}
+                ${a.client_name ? '• ' + a.client_name : ''}
+              </p>
+            </div>
+            ${UI.statusBadge(a.status)}
+          </div>
+        </div>`).join('');
+    }
+
+    // Init
+    buildSidebar();
+    buildNavLinks();
+    loadStats();
+    loadRecentCases();
+    loadRecentAppts();
+  </script>
+</body>
+</html>

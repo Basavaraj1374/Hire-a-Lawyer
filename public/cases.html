@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cases — Hire A Lawyer</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand"><div class="logo-icon">⚖️</div><span>Hire A <em>Lawyer</em></span></a>
+    <div class="navbar-user" style="position:relative">
+      <div style="position:relative" id="notif-bell" onclick="toggleNotifPanel()">
+        <span style="font-size:1.3rem;cursor:pointer;color:#fff">🔔</span>
+        <span class="notif-badge nav-badge" style="position:absolute;top:-6px;right:-6px;display:none"></span>
+      </div>
+      <div class="user-avatar" onclick="window.location.href='/dashboard'"></div>
+      <div id="notif-panel" class="notif-panel">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border)"><strong>Notifications</strong></div>
+        <div id="notif-list"></div>
+      </div>
+      <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:#fff;border:none" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">📋 My Cases</h1>
+        <p class="page-subtitle">Track and manage your legal cases</p>
+      </div>
+      <div id="headerAction"></div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select id="statusFilter" class="form-control" onchange="filterCases()">
+          <option value="">All Statuses</option>
+          <option value="open">Open</option>
+          <option value="pending">Pending</option>
+          <option value="active">Active</option>
+          <option value="closed">Closed</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Priority</label>
+        <select id="priorityFilter" class="form-control" onchange="filterCases()">
+          <option value="">All Priorities</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="urgent">Urgent</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Cases Table -->
+    <div class="card">
+      <div id="casesContainer"><div class="empty-state"><div class="spinner" style="margin:0 auto 12px"></div></div></div>
+    </div>
+  </main>
+
+  <!-- New Case Modal (Client) -->
+  <div class="modal-overlay" id="newCaseModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">➕ New Case</h2>
+        <button class="modal-close" onclick="UI.closeModal('newCaseModal')">✕</button>
+      </div>
+      <div class="error-message" id="caseError"></div>
+      <div class="form-group">
+        <label class="form-label">Case Title *</label>
+        <input type="text" id="caseTitle" class="form-control" placeholder="Brief title for your case">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select id="caseCategory" class="form-control">
+            <option value="">Select category</option>
+            <option>Family Law</option><option>Criminal Law</option><option>Corporate Law</option>
+            <option>Property Law</option><option>Civil Law</option><option>Labour Law</option>
+            <option>Tax Law</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select id="casePriority" class="form-control">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Assign Lawyer (Optional)</label>
+        <select id="caseLawyer" class="form-control">
+          <option value="">-- Select a lawyer --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Case Description</label>
+        <textarea id="caseDescription" class="form-control" rows="4" placeholder="Describe your legal matter in detail..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeModal('newCaseModal')">Cancel</button>
+        <button class="btn btn-primary" id="createCaseBtn" onclick="createCase()">📋 Create Case</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Case Detail Modal -->
+  <div class="modal-overlay" id="caseDetailModal">
+    <div class="modal" style="max-width:680px">
+      <div class="modal-header">
+        <h2 class="modal-title" id="caseDetailTitle">Case Details</h2>
+        <button class="modal-close" onclick="UI.closeModal('caseDetailModal')">✕</button>
+      </div>
+      <div id="caseDetailContent"></div>
+    </div>
+  </div>
+
+  <!-- Update Status Modal (Lawyer/Admin) -->
+  <div class="modal-overlay" id="updateStatusModal">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <h2 class="modal-title">Update Case Status</h2>
+        <button class="modal-close" onclick="UI.closeModal('updateStatusModal')">✕</button>
+      </div>
+      <input type="hidden" id="updateCaseId">
+      <div class="form-group">
+        <label class="form-label">New Status</label>
+        <select id="newStatus" class="form-control">
+          <option value="pending">Pending</option>
+          <option value="active">Active</option>
+          <option value="closed">Closed</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note</label>
+        <textarea id="statusNote" class="form-control" rows="3" placeholder="Add a note about this status change..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeModal('updateStatusModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="updateStatus()">Update Status</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Document Upload Modal -->
+  <div class="modal-overlay" id="uploadDocModal">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <h2 class="modal-title">📤 Upload Document</h2>
+        <button class="modal-close" onclick="UI.closeModal('uploadDocModal')">✕</button>
+      </div>
+      <div class="error-message" id="uploadError"></div>
+      <input type="hidden" id="uploadCaseId">
+      <div class="form-group">
+        <label class="form-label">Select File *</label>
+        <input type="file" id="docFile" class="form-control" accept=".pdf,.doc,.docx,.jpg,.png,.txt">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input type="text" id="docDescription" class="form-control" placeholder="Brief description of this document">
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="docConfidential" style="width:auto">
+        <label for="docConfidential" style="font-size:0.85rem">Mark as confidential</label>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeModal('uploadDocModal')">Cancel</button>
+        <button class="btn btn-primary" id="uploadDocBtn" onclick="uploadDocument()">📤 Upload</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    Auth.requireAuth();
+    const user = Auth.getUser();
+    let allCases = [];
+
+    function buildSidebar() {
+      document.getElementById('sidebar').innerHTML = `
+        <div class="sidebar-section">
+          <div class="sidebar-label">Main</div>
+          <a href="/dashboard" class="sidebar-item"><span class="icon">🏠</span> Dashboard</a>
+          <a href="/lawyers" class="sidebar-item"><span class="icon">⚖️</span> Find Lawyers</a>
+          <a href="/cases" class="sidebar-item active"><span class="icon">📋</span> My Cases</a>
+          <a href="/appointments" class="sidebar-item"><span class="icon">📅</span> Appointments</a>
+          ${user.role === 'admin' ? '<a href="/admin" class="sidebar-item"><span class="icon">🛡️</span> Admin Panel</a>' : ''}
+        </div>
+        <div class="sidebar-section" style="margin-top:auto">
+          <div class="sidebar-item" style="cursor:default"><span class="icon">👤</span><div><div style="font-weight:600;font-size:0.85rem">${user.name}</div><div style="font-size:0.72rem;color:var(--text-muted)">${user.role}</div></div></div>
+          <div class="sidebar-item" onclick="logout()" style="cursor:pointer;color:var(--danger)"><span class="icon">🚪</span> Logout</div>
+        </div>`;
+      document.querySelector('.user-avatar').textContent = UI.avatarInitials(user.name);
+    }
+
+    async function loadCases() {
+      const res = await API.get('/cases');
+      if (!res || !res.ok) { document.getElementById('casesContainer').innerHTML = UI.emptyState('Failed to load cases', '😟'); return; }
+      allCases = res.data.data;
+      renderCases(allCases);
+    }
+
+    function renderCases(cases) {
+      if (!cases.length) { document.getElementById('casesContainer').innerHTML = UI.emptyState('No cases found', '📋'); return; }
+      document.getElementById('casesContainer').innerHTML = `
+        <div class="table-container">
+          <table>
+            <thead><tr>
+              <th>Case Number</th><th>Title</th><th>Category</th>
+              ${user.role !== 'client' ? '<th>Client</th>' : ''}
+              ${user.role !== 'lawyer' ? '<th>Lawyer</th>' : ''}
+              <th>Status</th><th>Priority</th><th>Date</th><th>Actions</th>
+            </tr></thead>
+            <tbody>${cases.map(c => `
+              <tr>
+                <td><code style="font-size:0.78rem">${c.case_number}</code></td>
+                <td><strong style="font-size:0.88rem">${c.title}</strong></td>
+                <td style="font-size:0.82rem;color:var(--text-muted)">${c.category || '—'}</td>
+                ${user.role !== 'client' ? `<td style="font-size:0.85rem">${c.client_name || '—'}</td>` : ''}
+                ${user.role !== 'lawyer' ? `<td style="font-size:0.85rem">${c.lawyer_name || '<span style="color:var(--text-muted)">Unassigned</span>'}</td>` : ''}
+                <td>${UI.statusBadge(c.status)}</td>
+                <td>${UI.priorityBadge(c.priority)}</td>
+                <td style="font-size:0.78rem;color:var(--text-muted)">${UI.formatDate(c.created_at)}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline" onclick="viewCase(${c.id})">View</button>
+                  ${(user.role === 'lawyer' || user.role === 'admin') ? `<button class="btn btn-sm btn-primary" style="margin-left:4px" onclick="openStatusModal(${c.id})">Update</button>` : ''}
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    function filterCases() {
+      const status = document.getElementById('statusFilter').value;
+      const priority = document.getElementById('priorityFilter').value;
+      let filtered = allCases;
+      if (status) filtered = filtered.filter(c => c.status === status);
+      if (priority) filtered = filtered.filter(c => c.priority === priority);
+      renderCases(filtered);
+    }
+
+    async function viewCase(id) {
+      const res = await API.get(`/cases/${id}`);
+      if (!res || !res.ok) { Toast.error('Failed to load case.'); return; }
+      const c = res.data.data;
+      document.getElementById('caseDetailTitle').textContent = c.title;
+      document.getElementById('caseDetailContent').innerHTML = `
+        <div class="tabs" data-tabs>
+          <button class="tab-btn active" data-tab="overview-tab">Overview</button>
+          <button class="tab-btn" data-tab="timeline-tab">Timeline</button>
+          <button class="tab-btn" data-tab="docs-tab">Documents (${c.documents?.length || 0})</button>
+        </div>
+        <div id="overview-tab" class="tab-pane active">
+          <div class="grid-2" style="gap:12px;margin-bottom:16px">
+            <div style="background:var(--bg);padding:12px;border-radius:var(--radius-sm)">
+              <p style="font-size:0.73rem;color:var(--text-muted)">Case Number</p>
+              <p style="font-weight:700;font-size:0.85rem">${c.case_number}</p>
+            </div>
+            <div style="background:var(--bg);padding:12px;border-radius:var(--radius-sm)">
+              <p style="font-size:0.73rem;color:var(--text-muted)">Status</p>
+              ${UI.statusBadge(c.status)}
+            </div>
+            <div style="background:var(--bg);padding:12px;border-radius:var(--radius-sm)">
+              <p style="font-size:0.73rem;color:var(--text-muted)">Client</p>
+              <p style="font-weight:600;font-size:0.85rem">${c.client_name}</p>
+            </div>
+            <div style="background:var(--bg);padding:12px;border-radius:var(--radius-sm)">
+              <p style="font-size:0.73rem;color:var(--text-muted)">Lawyer</p>
+              <p style="font-weight:600;font-size:0.85rem">${c.lawyer_name || 'Not assigned'}</p>
+            </div>
+          </div>
+          <div class="form-group"><p style="font-weight:600;margin-bottom:8px">Description</p>
+          <p style="font-size:0.87rem;color:var(--text-muted);line-height:1.7">${c.description || 'No description provided.'}</p></div>
+          <button class="btn btn-sm btn-outline" style="margin-top:8px" onclick="openUpload(${c.id})">📤 Upload Document</button>
+        </div>
+        <div id="timeline-tab" class="tab-pane">
+          <div class="timeline">
+            ${(c.history || []).map(h => `
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <p style="font-size:0.85rem;font-weight:600">Status changed to <strong>${h.new_status}</strong></p>
+                  ${h.old_status ? `<p style="font-size:0.8rem;color:var(--text-muted)">From: ${h.old_status}</p>` : ''}
+                  ${h.note ? `<p style="font-size:0.82rem;color:var(--text)">${h.note}</p>` : ''}
+                  <p class="timeline-date">By ${h.changed_by_name} • ${UI.formatDateTime(h.changed_at)}</p>
+                </div>
+              </div>`).join('') || '<p style="color:var(--text-muted);font-size:0.85rem">No history yet.</p>'}
+          </div>
+        </div>
+        <div id="docs-tab" class="tab-pane">
+          ${(c.documents || []).length ? c.documents.map(d => `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:8px">
+              <div>
+                <p style="font-size:0.85rem;font-weight:600">${d.original_name}</p>
+                <p style="font-size:0.75rem;color:var(--text-muted)">${d.uploaded_by_name} • ${UI.formatDate(d.created_at)} • ${(d.file_size/1024).toFixed(1)} KB</p>
+              </div>
+              <a href="/api/documents/${d.id}/download" class="btn btn-sm btn-outline">⬇ Download</a>
+            </div>`).join('') : UI.emptyState('No documents uploaded', '📁')}
+        </div>`;
+      initTabs();
+      UI.openModal('caseDetailModal');
+    }
+
+    async function loadLawyerOptions() {
+      const res = await API.get('/lawyers?limit=100');
+      if (!res || !res.ok) return;
+      const select = document.getElementById('caseLawyer');
+      res.data.data.forEach(l => {
+        select.innerHTML += `<option value="${l.id}">${l.name} — ${l.specialization}</option>`;
+      });
+    }
+
+    async function createCase() {
+      const title = document.getElementById('caseTitle').value.trim();
+      const description = document.getElementById('caseDescription').value.trim();
+      const category = document.getElementById('caseCategory').value;
+      const priority = document.getElementById('casePriority').value;
+      const lawyer_id = document.getElementById('caseLawyer').value;
+      if (!title) { UI.showError('#caseError', 'Case title is required.'); return; }
+      UI.loading('#createCaseBtn', true, 'Creating...');
+      const res = await API.post('/cases', { title, description, category, priority, lawyer_id: lawyer_id || null });
+      UI.loading('#createCaseBtn', false);
+      if (!res || !res.ok) { UI.showError('#caseError', res?.data?.message || 'Failed to create case.'); return; }
+      UI.closeModal('newCaseModal');
+      Toast.success('Case created: ' + res.data.data.case_number);
+      loadCases();
+    }
+
+    function openStatusModal(caseId) {
+      document.getElementById('updateCaseId').value = caseId;
+      document.getElementById('statusNote').value = '';
+      UI.openModal('updateStatusModal');
+    }
+
+    async function updateStatus() {
+      const caseId = document.getElementById('updateCaseId').value;
+      const status = document.getElementById('newStatus').value;
+      const note = document.getElementById('statusNote').value.trim();
+      const res = await API.put(`/cases/${caseId}/status`, { status, note });
+      if (!res || !res.ok) { Toast.error(res?.data?.message || 'Failed to update.'); return; }
+      UI.closeModal('updateStatusModal');
+      Toast.success('Case status updated to ' + status);
+      loadCases();
+    }
+
+    function openUpload(caseId) {
+      document.getElementById('uploadCaseId').value = caseId;
+      UI.closeModal('caseDetailModal');
+      UI.openModal('uploadDocModal');
+    }
+
+    async function uploadDocument() {
+      const caseId = document.getElementById('uploadCaseId').value;
+      const file = document.getElementById('docFile').files[0];
+      const desc = document.getElementById('docDescription').value;
+      const confidential = document.getElementById('docConfidential').checked;
+      if (!file) { UI.showError('#uploadError', 'Please select a file.'); return; }
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('case_id', caseId);
+      formData.append('description', desc);
+      formData.append('is_confidential', confidential);
+      UI.loading('#uploadDocBtn', true, 'Uploading...');
+      const res = await API.upload('/documents/upload', formData);
+      UI.loading('#uploadDocBtn', false);
+      if (!res || !res.ok) { UI.showError('#uploadError', res?.data?.message || 'Upload failed.'); return; }
+      UI.closeModal('uploadDocModal');
+      Toast.success('Document uploaded successfully!');
+    }
+
+    // Setup header action
+    if (user.role === 'client') {
+      document.getElementById('headerAction').innerHTML = '<button class="btn btn-primary" onclick="loadLawyerOptions();UI.openModal(\'newCaseModal\')">➕ New Case</button>';
+    }
+
+    buildSidebar();
+    loadCases();
+
+    // Check URL hash for new case
+    if (window.location.hash === '#new' && user.role === 'client') {
+      loadLawyerOptions();
+      UI.openModal('newCaseModal');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login / Register — Hire A Lawyer</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="logo-circle">⚖️</div>
+        <h2>Hire A Lawyer</h2>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-top:4px">Your Legal Partner Platform</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="loginTab" onclick="switchTab('login')">Login</div>
+        <div class="auth-tab" id="registerTab" onclick="switchTab('register')">Register</div>
+      </div>
+
+      <!-- Login Form -->
+      <div id="loginForm">
+        <div class="error-message" id="loginError"></div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="loginEmail" class="form-control" placeholder="Enter your email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="loginPassword" class="form-control" placeholder="Enter your password">
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px" id="loginBtn" onclick="handleLogin()">Login</button>
+        <div style="text-align:center;margin-top:16px">
+          <p style="font-size:0.82rem;color:var(--text-muted)">Demo Accounts:</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:6px">
+            <button class="btn btn-outline btn-sm" onclick="fillDemo('admin@hirelawyer.com','Admin@123')">Admin</button>
+            <button class="btn btn-outline btn-sm" onclick="fillDemo('priya.sharma@hirelawyer.com','Admin@123')">Lawyer</button>
+            <button class="btn btn-outline btn-sm" onclick="fillDemo('ravi.kumar@example.com','Admin@123')">Client</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="registerForm" style="display:none">
+        <div class="error-message" id="registerError"></div>
+        <div class="success-message" id="registerSuccess"></div>
+        
+        <!-- Role Toggle -->
+        <div style="margin-bottom:16px">
+          <label class="form-label">Register As</label>
+          <div class="auth-tabs" style="margin-bottom:0">
+            <div class="auth-tab active" id="roleClient" onclick="setRole('client')">👤 Client</div>
+            <div class="auth-tab" id="roleLawyer" onclick="setRole('lawyer')">⚖️ Lawyer</div>
+          </div>
+        </div>
+        <input type="hidden" id="regRole" value="client">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" id="regName" class="form-control" placeholder="Your full name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input type="tel" id="regPhone" class="form-control" placeholder="Mobile number">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          <input type="email" id="regEmail" class="form-control" placeholder="Your email">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Password *</label>
+            <input type="password" id="regPassword" class="form-control" placeholder="Min 6 characters">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm Password *</label>
+            <input type="password" id="regConfirm" class="form-control" placeholder="Repeat password">
+          </div>
+        </div>
+        <button class="btn btn-accent" style="width:100%;justify-content:center;padding:12px" id="registerBtn" onclick="handleRegister()">Create Account</button>
+      </div>
+
+      <div style="text-align:center;margin-top:16px">
+        <a href="/" style="font-size:0.82rem;color:var(--text-muted);text-decoration:none">← Back to Home</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    // Redirect if already logged in
+    if (Auth.isLoggedIn()) window.location.href = '/dashboard';
+
+    // Check URL param for register
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('tab') === 'register') switchTab('register');
+    if (urlParams.get('role')) setRole(urlParams.get('role'));
+
+    function switchTab(tab) {
+      document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+      document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+      document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+      document.getElementById('registerTab').classList.toggle('active', tab === 'register');
+    }
+
+    function setRole(role) {
+      document.getElementById('regRole').value = role;
+      document.getElementById('roleClient').classList.toggle('active', role === 'client');
+      document.getElementById('roleLawyer').classList.toggle('active', role === 'lawyer');
+    }
+
+    function fillDemo(email, password) {
+      document.getElementById('loginEmail').value = email;
+      document.getElementById('loginPassword').value = password;
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      if (!email || !password) { UI.showError('#loginError', 'Please enter email and password.'); return; }
+      UI.hideError('#loginError');
+      UI.loading('#loginBtn', true, 'Logging in...');
+      const res = await API.post('/auth/login', { email, password });
+      UI.loading('#loginBtn', false, 'Login');
+      if (!res) return;
+      if (!res.ok) { UI.showError('#loginError', res.data.message); return; }
+      Auth.setSession(res.data.token, res.data.user);
+      Toast.success('Welcome back, ' + res.data.user.name + '!');
+      setTimeout(() => window.location.href = '/dashboard', 800);
+    }
+
+    async function handleRegister() {
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirm = document.getElementById('regConfirm').value;
+      const role = document.getElementById('regRole').value;
+      const phone = document.getElementById('regPhone').value.trim();
+
+      if (!name || !email || !password) { UI.showError('#registerError', 'Name, email and password are required.'); return; }
+      if (password.length < 6) { UI.showError('#registerError', 'Password must be at least 6 characters.'); return; }
+      if (password !== confirm) { UI.showError('#registerError', 'Passwords do not match.'); return; }
+      UI.hideError('#registerError');
+
+      UI.loading('#registerBtn', true, 'Creating account...');
+      const res = await API.post('/auth/register', { name, email, password, role, phone });
+      UI.loading('#registerBtn', false, 'Create Account');
+      if (!res) return;
+      if (!res.ok) { UI.showError('#registerError', res.data.message); return; }
+      Auth.setSession(res.data.token, res.data.user);
+      Toast.success('Account created successfully!');
+      setTimeout(() => window.location.href = '/dashboard', 800);
+    }
+
+    // Enter key support
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const loginVisible = document.getElementById('loginForm').style.display !== 'none';
+        if (loginVisible) handleLogin(); else handleRegister();
+      }
+    });
+  </script>
+</body>
+</html>
